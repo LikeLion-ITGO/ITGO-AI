@@ -18,7 +18,7 @@ TensorFlow/Keras로 구현하였고, 데이터 증강과 파인튜닝 과정을 
 - **데이터 분할 비율**:
   - 학습: 검증 = 약 80% : 20%
 
-  ## 모델 구조
+## 모델 구조
 - **Base Model**: EfficientNetB0 (ImageNet 사전학습 가중치, top layer 제거)
 
 - **학습 단계**:
