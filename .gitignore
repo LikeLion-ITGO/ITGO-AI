@@ -1,9 +1,14 @@
 tempCodeRunnerFile.py
 meet-fresh-classfier-timecount.py
 test.py
-onnx-converter.py
+requirements.txt
+Dockerfile
+.dockerignore
+
+matcher/
 
 logs/
 plots/
 Meat Freshness.v1-new-dataset.multiclass/
 trt_cache/
+model/MobileNet-v3-Small.onnx

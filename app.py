@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 import onnxruntime as ort
 from time import perf_counter
+from flask_cors import CORS
 
 # === OCR 관련 (지연 로딩) ===
 try:
@@ -17,6 +18,16 @@ try:
 except Exception:
     cv2 = None
     PaddleOCR = None
+
+
+app = Flask(__name__)
+
+origins = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "https://itgo-client.vercel.app",
+]
+CORS(app, resources={r"*": {"origins": origins}})
 
 # =========================
 # Config
@@ -33,8 +44,9 @@ PREPROCESSOR = os.getenv("PREPROCESSOR", "none").lower()
 
 CLASS_NAMES = ["Fresh", "Half-Fresh", "Spoiled"]
 TIE_PRIORITY = ["Spoiled", "Half-Fresh", "Fresh"]
+OCR_DEVICE = os.getenv("OCR_DEVICE", "auto").lower()  # DEBUG: OCR 강제 디바이스
 
-app = Flask(__name__)
+
 app.url_map.strict_slashes = False
 
 
@@ -304,21 +316,27 @@ def _preprocess_for_ocr(img_bgr: np.ndarray) -> np.ndarray:
 
 
 def _init_ocr_engine():
-    """PaddleOCR 3.x: GPU 우선, 실패 시 CPU로 폴백."""
+    """PaddleOCR: 환경변수로 CPU 강제 시 GPU 시도도 하지 않음."""
     global OCR_ENGINE
     if OCR_ENGINE is not None:
         return
     if PaddleOCR is None:
-        raise RuntimeError(
-            "paddleocr 미설치. `pip install paddleocr opencv-python-headless`"
-        )
+        OCR_ENGINE = None  # paddleocr 미설치 시 조용히 패스
+        return
+
+    # 환경변수로 CPU 강제
+    force_cpu = (OCR_DEVICE == "cpu") or (os.getenv("USE_CUDA", "0") == "0")
+    if force_cpu:
+        OCR_ENGINE = PaddleOCR(lang="korean", use_angle_cls=True, device="cpu")
+        return
+
+    # 그렇지 않다면 GPU 우선, 실패 시 CPU
     try:
         OCR_ENGINE = PaddleOCR(lang="korean", use_angle_cls=True, device="gpu")
-        print("[OCR] init ok: lang=korean, device=gpu")
-    except Exception as e:
-        print(f"[OCR] GPU 초기화 실패, CPU로 재시도: {e}")
+        # print("[OCR] init ok: gpu")  # DEBUG
+    except Exception:
         OCR_ENGINE = PaddleOCR(lang="korean", use_angle_cls=True, device="cpu")
-        print("[OCR] init ok: lang=korean, device=cpu")
+        # print("[OCR] fallback to cpu")  # DEBUG
 
 
 def _ocr_lines(img_bgr):
