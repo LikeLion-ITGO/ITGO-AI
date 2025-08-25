@@ -21,14 +21,15 @@ except Exception:
 
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 
-origins = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-    "https://itgo-client.vercel.app",
-]
-CORS(app, resources={r"*": {"origins": origins}})
-
+# origins = [
+#     "http://127.0.0.1:5173",
+#     "http://localhost:5173",
+#     "https://itgo-client.vercel.app",
+# ]
+# CORS(app, resources={r"*": {"origins": origins}})
+CORS(app)
 # =========================
 # Config
 # =========================
@@ -45,9 +46,6 @@ PREPROCESSOR = os.getenv("PREPROCESSOR", "none").lower()
 CLASS_NAMES = ["Fresh", "Half-Fresh", "Spoiled"]
 TIE_PRIORITY = ["Spoiled", "Half-Fresh", "Fresh"]
 OCR_DEVICE = os.getenv("OCR_DEVICE", "auto").lower()  # DEBUG: OCR 강제 디바이스
-
-
-app.url_map.strict_slashes = False
 
 
 # =========================
